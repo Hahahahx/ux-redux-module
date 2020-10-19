@@ -1,9 +1,12 @@
 import { FC } from "react";
-import { useModule } from "../src/Provider";
 import { Action, LocalStorage, SessionStorage, Update } from "./decorators";
 
-declare var ReduxProvider: FC<{ value: any }>;
+type ReduxProvider = FC<{ value: any }>;
 type useModule<T = {}> = () => T;
+type Action = (target: any, property: string, descriptor: any) => void;
+type Update = (target: any, property: string, descriptor: any) => void;
+type SessionStorage = (target: any, property: string, descriptor: any) => void;
+type LocalStorage = (target: any, property: string, descriptor: any) => void;
 
 declare module "ux-redux-module" {
     export {
