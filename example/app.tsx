@@ -9,6 +9,7 @@ const getModule = () => module;
 export type TModule = ReturnType<typeof getModule>;
 
 
+
 ReactDOM.render(
     <ReduxProvider value={module}>
         <div>可以刷新网页，对状态加了 @SesstionStorage 会保存到SesstionStorage中</div>

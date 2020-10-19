@@ -33,6 +33,7 @@ export function useModule<T>():T {
     const { state } = useSelector((state) => ({ state }));
     const obj = {};
     // 重新组装module
+    console.log(modules)
     Reflect.ownKeys(modules).forEach((key) => {
         const module = Reflect.get(modules, key);
         const moduleState = Reflect.get(state, key);
