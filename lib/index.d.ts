@@ -1,14 +1,16 @@
-import { FC } from "react";
-import { Action, LocalStorage, SessionStorage, Update } from "./decorators";
-
-type ReduxProvider = FC<{ value: any }>;
-type useModule<T = {}> = () => T;
-type Action = (target: any, property: string, descriptor: any) => void;
-type Update = (target: any, property: string, descriptor: any) => void;
-type SessionStorage = (target: any, property: string, descriptor: any) => void;
-type LocalStorage = (target: any, property: string, descriptor: any) => void;
+/// <reference types="react" />
 
 declare module "ux-redux-module" {
+    function ReduxProvider(): React.FC<{ value: any }>;
+    function useModule<T = {}>(): T;
+    function Action(target: any, property: string, descriptor: any): void;
+    function Update(target: any, property: string, descriptor: any): void;
+    function SessionStorage(
+        target: any,
+        property: string,
+        descriptor: any
+    ): void;
+    function LocalStorage(target: any, property: string, descriptor: any): void;
     export {
         ReduxProvider,
         useModule,
@@ -21,6 +23,6 @@ declare module "ux-redux-module" {
 
 declare namespace JSX {
     interface IntrinsicElements {
-        ReduxProvider: FC<{ value: any }>;
+        ReduxProvider: React.FC<{ value: any }>;
     }
 }
