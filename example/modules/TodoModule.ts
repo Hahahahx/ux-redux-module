@@ -1,4 +1,4 @@
-import { Action, SesstionStorage, Update } from "../../src/decorators";
+import { Action, SessionStorage, Update } from "../../src/decorators";
 
 
 
@@ -7,7 +7,7 @@ import { Action, SesstionStorage, Update } from "../../src/decorators";
  */
 
 class TodoModule {
-    @SesstionStorage
+    @SessionStorage
     list: string[] = [];
 
     @Update

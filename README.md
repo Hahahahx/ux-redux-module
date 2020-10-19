@@ -1,148 +1,89 @@
-# ux-autoroute
+# ux-redux-module
 
-自动路由配套路由组件, [在线 demo](https://hahahahx.github.io/ux-autoroute/), [demo源码](https://github.com/Hahahahx/ux-autoroute/blob/master/example/app.tsx)
+面向对象redux, [在线 demo](https://hahahahx.github.io/ux-redux-module/), [demo源码](https://github.com/Hahahahx/ux-redux-module/tree/master/example)
 
 React, hook, 函数组件
 
-配套自动化路由，解析[自动化路由](https://hahahahx.github.io/ux-autoroute-plugin/)所生成的路由映射表
-----
-在pages的根目录下会有顶级路由`/`，由此开始依次递归子集路由，
-demo中`/`只作为引导，取`index.tsx`部分片段：
+-----------------------------
+
+在该项目的状态管理中，约束用户必须采用`面向对象`的形式来编写，这有助于
+更好的管理项目，面向对象的形式使我们更能清晰的看见状态的结构。
+
 ```typescript
-const Index = () => {
-    return (
-        <RouterView />
-    )
-}
-export default React.memo(Index, () => true);
-```
-可以看到，代码块中的`<RouterView/>`为子集路由的映射。
+class FileModule {
 
-___
-在该项目中的所有路由都采用配置的方式呈现，所以，在每个路由`index.tsx`的同级
-目录下创建一个`route.config`就可以配置该路由的属性。<br/>
-`route.config`是JSON文件。路由配置规则如下：
-```
-{
-    "noLazy":true,    
-    "default":true,
-    "meta":{
-        "name":"'主页'"
+    @LocalStorage
+    @SesstionStorage
+    filename = 'FileModule';
+
+    @SesstionStorage
+    fileType = 'txt'
+
+    @Update
+    private update() { }
+
+    @Action
+    reqFile() {
+        return UserApi.GetUserInfo('id1').then(res => {
+            this.filename = 'FileModule被Action更新了';
+            this.fileType = 'action'
+        })
     }
-} 
-```
-当noLazy为true时，该路由为非动态路由，建议在`/`、`/main`这种根路由下使用该规则。<br/>
-如果不使用该规则，那么在子集路由渲染页面时，会因为匹配到自身的动态引入导致页面的重新渲染。
-其结果往往是我们不希望看到的。<br/>
-default被应用在父级路由引导子集路由时的默认路由，如顶级路由`/`只是一个空白的页面，
-那么此时我们就需要将`/login`或者`/main`的default开启。<br/>
-如此一来，我们在渲染`/`顶级路由时，就会访问默认路由，去加载`login->index.tsx`或`main->index.tsx`。
 
-我们在路由中可以使用`useRoute`来取到meta的值和当前路由的子路由列表
+    reqFilebyUpdate() {
+        this.filename = 'FileModule被Update更新了';
+        this.fileType = 'update'
+        this.update()
+    }
+}
+```
+每一个类都可以提供一个update函数来更新你所做的状态改变，该update()必须要被@Update装饰，
+且命名必须为"update"。
+
+你也可以使用@Action，但是需要确保所装饰的函数的返回值是一个Promise对象，且你的状态修改也是在该流程中完成的。
+
+被@SessionStorage和@LocalStorage装饰的字段会被注册到内存和本地中。<br/>
+提供了deleteSession(moduleName:string,property?:string)和deleteLocal()可以让你自由的删除他们。<br/>
+你需要确保你不会在你的事件流中使用到被删除的属性。因为被装饰的属性会不断的在更新状态中更新对应的Local或Session
+
+引入:
+```typescript
+
+const module = { FileModule };
+const getModule = () => module;
+export type TModule = ReturnType<typeof getModule>;
+
+ReactDOM.render(
+    <ReduxProvider value={module}>
+        <div>可以刷新网页，对状态加了 @SesstionStorage 会保存到SesstionStorage中</div>
+        <App />
+    </ReduxProvider>,
+    document.getElementById("root")
+);
+
+```
+
+引入ReduxProvider，传入状态module，可以对module推测类型，方便后续在组件中更好的使用。
+
+在组件中使用：
 ```typescript
 
 const Main = () => {
-    const { meta, routes } = useRoute();
+
+    const { FileModule } = useModule<TModule>()
+
     return (
-        <>
-            {meta?.name}
-            <ul>
-                {routes.map((item, index) => (
-                    <li key={index}>
-                        <NavLink to={item.path}>{item.meta?.name}</NavLink>
-                    </li>
-                ))}
-            </ul>
-
-            <div>
-                <RouterView />
+        <div style={{ textAlign: 'center' }}>
+            <div className='page'>
+                FileModule-filename:{FileModule.filename}
             </div>
-        </>
-    );
-};
-
-```
-
-除了上述的路由管理，我们可能还会遇到一些与业务紧密耦合复用性不高的组件，推荐在当前的路由目录下
-新建`__Component`目录，来存放当前路由所依赖的业务组件。
-
-
-在demo中，我们还对角色访问权限做了一个小的样例，它是在`Routers`组件的`before`属性中完成的。
-
-Routers：
-```typescript
-
-/**
- * routers 路由映射表对象
- * noMatch 404
- * before 访问路有前触发，如果结果返回了JSX对象的话则替换默认的路由组件
- * after 路由组件生成后触发
- */
-interface RouterParams {
-    routers: Array<RouteParams>;
-    noMatch?: () => ReactElement | JSX.Element;
-    before?: (location: Location) => void | JSX.Element | ReactElement;
-    after?: (location: Location) => void;
+            <Button ghost onClick={() => {
+                FileModule.reqFile()
+            }}>ChangeFileModuleByAction</Button>
+            <Button ghost onClick={() => {
+                FileModule.reqFilebyUpdate()
+            }}>ChangeUserModuleByUpdate</Button>
+        </div>
+    )
 }
-
 ```
-
-
-
-所生成的路由映射表`router.ts`:
-```typescript
-import Page from '@/pages/index';
-export const routeConfig = [
-    {
-        noLazy: true,
-        meta: {
-            name: '根目录'
-        },
-        child: [
-            {
-                default: true,
-                meta: {
-                    name: '登录'
-                },
-                child: [],
-                componentPath: 'pages/login/index.tsx',
-                path: '/login'
-            },
-            {
-                meta: {
-                    name: '首页'
-                },
-                child: [
-                    {
-                        meta: {
-                            name: '土豆'
-                        },
-                        child: [],
-                        componentPath: 'pages/main/potato/index.tsx',
-                        path: '/main/potato'
-                    },
-                    {
-                        meta: {
-                            name: '西红柿'
-                        },
-                        child: [],
-                        componentPath: 'pages/main/tomato/index.tsx',
-                        path: '/main/tomato'
-                    }
-                ],
-                componentPath: 'pages/main/index.tsx',
-                path: '/main'
-            }
-        ],
-        componentPath: 'pages/index.tsx',
-        path: '',
-        component: Page
-    }
-]
-```
-
-
-
-----------------------
-
-<b>注意：[ux-autoroute-plugin](https://github.com/Hahahahx/ux-autoroute-plugin)仅仅只负责生成路由映射表，该组件才是对路由映射表规则的实现，同理你也可以写自己的规则。</b>
