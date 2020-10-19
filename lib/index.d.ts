@@ -5,7 +5,7 @@ declare module "ux-redux-module" {
         value,
         children,
     }: {
-        value: { [K: string]: string };
+        value: any;
         children: any;
     }): JSX.Element;
     function useModule<T = {}>(): T;
