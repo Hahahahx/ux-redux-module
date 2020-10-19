@@ -1,16 +1,18 @@
 /// <reference types="react" />
 
 declare module "ux-redux-module" {
-    function ReduxProvider(): React.FC<{ value: any }>;
+    function ReduxProvider({
+        value,
+        children,
+    }: {
+        value: { [K: string]: string };
+        children: any;
+    }): JSX.Element;
     function useModule<T = {}>(): T;
     function Action(target: any, property: string, descriptor: any): void;
     function Update(target: any, property: string, descriptor: any): void;
-    function SessionStorage(
-        target: any,
-        property: string,
-        descriptor: any
-    ): void;
-    function LocalStorage(target: any, property: string, descriptor: any): void;
+    function SessionStorage(...props: any): void;
+    function LocalStorage(...props: any): void;
     export {
         ReduxProvider,
         useModule,
@@ -19,10 +21,4 @@ declare module "ux-redux-module" {
         SessionStorage,
         LocalStorage,
     };
-}
-
-declare namespace JSX {
-    interface IntrinsicElements {
-        ReduxProvider: React.FC<{ value: any }>;
-    }
 }
