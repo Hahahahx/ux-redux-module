@@ -46,10 +46,11 @@ module.exports = {
     },
     plugins: [htmlWebpackPlugin],
     resolve: {
-        alias:{
-            "@":path.resolve('example')
+        alias: {
+            "@": path.resolve("example"),
         },
         extensions: [".js", ".jsx", ".ts", ".tsx"],
+        fallback: { crypto: false },
     },
     // externals: [
     //     // nodeExternals(),
