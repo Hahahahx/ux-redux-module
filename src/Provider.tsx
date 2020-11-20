@@ -13,7 +13,12 @@ let modules = {};
 const ReduxProvider: FC<{ value: any }> = ({ children, value }) => {
     modules = value;
     const reducer = combineReducers(reducers(modules));
-    const store = createStore(reducer, composeWithDevTools());
+    const store = createStore(
+        reducer,
+        process.env.NODE_ENV === "development"
+            ? composeWithDevTools()
+            : undefined
+    );
     getStore(store);
     return <Provider store={store}>{children}</Provider>;
 };
