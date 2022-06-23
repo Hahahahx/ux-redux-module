@@ -1,4 +1,10 @@
-import { Action, LocalStorage, SessionStorage, Update } from "./decorators";
+import {
+    Action,
+    LocalStorage,
+    SessionStorage,
+    Update,
+    useModuleState,
+} from "./decorators";
 import ReduxProvider, { useModule } from "./Provider";
 
 export {
@@ -8,4 +14,5 @@ export {
     Update,
     SessionStorage,
     LocalStorage,
+    useModuleState,
 };

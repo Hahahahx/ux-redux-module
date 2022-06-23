@@ -33,12 +33,16 @@ export function reducers(modules: any) {
             hasLocal({ ...module }, contextName),
             contextName
         );
-        obj[contextName] = function (state: any = moduleItem, action: Action) {
+
+        obj[contextName] = function (
+            state: any = JSON.stringify(moduleItem),
+            action: Action
+        ) {
             // 以命名规则 Module_ 开头的，确保Action匹配到自身的Module而不会影响到其他的Module
             if (new RegExp("^" + contextName + "_").test(action.type)) {
-                return { ...state, ...action.payload };
+                return action.payload;
             }
-            return { ...state };
+            return state;
         };
     });
     return obj;
@@ -70,10 +74,7 @@ function hasLocal(moduleItem: any, name: string) {
 function hasSession(moduleItem: any, name: string) {
     const moduleSession = Session.getItem(name);
     if (moduleSession) {
-        moduleItem = Object.assign(
-            moduleItem,
-            JSON.parse(Decrypt(moduleSession))
-        );
+        moduleItem = Object.assign(moduleItem, JSON.parse(moduleSession));
     } else {
         setSession(name, moduleItem);
     }
@@ -87,7 +88,7 @@ export function setLocal(name: string, module: any) {
         const obj = {};
         // 遍历需要local的字段
         list.forEach((key: string) => {
-            Reflect.set(obj, key, Reflect.get(module, key));
+            Reflect.set(obj, key, Reflect.get(JSON.parse(module), key));
         });
         // 将他们存放到Localstorage中
         Local.setItem(name, Encrypt(JSON.stringify(obj)));
@@ -97,14 +98,15 @@ export function setLocal(name: string, module: any) {
 export function setSession(name: string, module: any) {
     const list = SessionMap && SessionMap.get(name);
     // 只添加属性队列中需要sessionStorage的属性
+    console.log(list);
     if (list) {
         const obj = {};
         // 遍历需要session的字段
         list.forEach((key: string) => {
-            Reflect.set(obj, key, Reflect.get(module, key));
+            Reflect.set(obj, key, Reflect.get(JSON.parse(module), key));
         });
         // 将他们存放到session中
-        Session.setItem(name, Encrypt(JSON.stringify(obj)));
+        Session.setItem(name, JSON.stringify(obj));
     }
 }
 
@@ -124,9 +126,9 @@ export function deleteSeesion(moduleName: string, property?: string) {
     };
     if (property) {
         hasModule(() => {
-            const module = JSON.parse(Decrypt(session));
+            const module = JSON.parse(session as any);
             if (Reflect.deleteProperty(module, property)) {
-                Session.setItem(moduleName, Encrypt(JSON.stringify(module)));
+                Session.setItem(moduleName, JSON.stringify(module));
             } else {
                 throw new Error(
                     `在SessionStorage的${moduleName}中没有${property}字段`

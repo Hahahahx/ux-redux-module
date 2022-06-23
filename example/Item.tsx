@@ -1,10 +1,13 @@
 import React, { FC } from "react";
+import { useModuleState } from "../src/decorators";
 import { useModule } from "../src/Provider";
-import { TModule } from "./app";
+import { TModule } from "./app"; 
+import { TodoModule } from "./modules";
 
 export const Item: FC<{ index: number; str: string }> = ({ index, str }) => {
     
-    const {TodoModule} = useModule<TModule>();
+    // const {TodoModule} = useModule<TModule>();
+ 
     
     return (
         <div>

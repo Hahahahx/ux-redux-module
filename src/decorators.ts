@@ -7,8 +7,14 @@
 
 import { setSession } from "./storage";
 import { AnyAction, CombinedState, Store } from "redux";
+import { useSyncExternalStore } from "react";
 
-let store: { dispatch: (arg0: { type: string; payload: any }) => void };
+let store: Store<
+    CombinedState<{
+        [p: string]: any;
+    }>,
+    AnyAction
+>;
 
 export const getStore = (
     stores: Store<
@@ -20,6 +26,25 @@ export const getStore = (
 ) => {
     store = stores;
 };
+
+/**
+ * module Hook
+ * 根据传入的类模块在store中找到对应的状态
+ * 重新构建该类
+ * 通过useSyncExternalStore更新视图
+ */
+export function useModuleState<T>(params: T) {
+    const name = params?.constructor.name;
+    if (name) {
+        const state = useSyncExternalStore(
+            store.subscribe,
+            () => store.getState()[name]
+        );
+        Object.assign(params, JSON.parse(state));
+        return params;
+    }
+    return params;
+}
 
 /**
  * 属性队列，用于判断哪些属性是需要添加到sessionStorage中的，
@@ -41,6 +66,8 @@ export function SessionStorage(...params: any) {
     // 将该属性添加到sessionStorage属性队列中去
     let list = SessionMap.get(contextName);
     list = list ? [...list, property] : [property];
+
+    console.log(list);
     SessionMap.set(contextName, list);
 }
 
@@ -66,22 +93,27 @@ export function LocalStorage(...params: any) {
  */
 export function Update(target: any, property: string, descriptor: any) {
     // 限定方法名为update
-    if (property !== "update") return;
+    // if (property !== "update") return;
     // 保留update原生函数
     const oldFunc = descriptor.value;
-    const contextName = target.constructor.name;
-    descriptor.value = function () {
+
+    console.log(descriptor);
+    // const contextName = target.constructor.name;
+    descriptor.value = async function (contextName: string, module: any) {
         try {
-            const value = oldFunc();
-            const module = { ...this };
+            // console.log(params);
+            const value = await oldFunc.apply(this);
+            // const module = { ...this };
             // 同步dispatch 如UserModule_SET ，即为发送action去更新UserModule
             store.dispatch({
                 type: contextName + "_SET",
                 payload: module,
             });
+
+            console.log(contextName, module);
             setSession(contextName, module);
             return value;
-        } catch (e) {
+        } catch (e: any) {
             throw Error(e);
         }
     };
@@ -112,11 +144,19 @@ export function Action(target: any, property: string, descriptor: any) {
             });
             setSession(target.constructor.name, module);
             return value;
-        } catch (e) {
+        } catch (e: any) {
             throw Error(e);
         }
     };
     // 冻结对象
     descriptor.configurable = false;
     descriptor.writable = false;
+}
+
+export function Module(module: any) {
+    module.prototype.update = function () {
+        module.prototype.dispatch(module.name, JSON.stringify(this));
+    };
+
+    return module;
 }
