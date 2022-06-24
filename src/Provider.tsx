@@ -6,7 +6,7 @@ import React, {
 } from "react";
 import { combineReducers, legacy_createStore as createStore } from "redux";
 import { getStore, Update } from "./decorators";
-import { deleteSeesion, reducers } from "./storage";
+import { reducers } from "./storage";
 
 const ModuleContext = createContext<any>(null);
 
