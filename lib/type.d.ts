@@ -21,6 +21,7 @@ declare module "ux-redux-module" {
      */
     // function Update(target: any, property: string, descriptor: any): void;
 
+    function Module(...props: any): void;
     /**
      * SessionStorage存储
      */
@@ -40,6 +41,7 @@ declare module "ux-redux-module" {
     export {
         ReduxProvider,
         useModule,
+        Module,
         BaseModule,
         // Action,
         // Update,
