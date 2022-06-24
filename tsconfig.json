@@ -1,7 +1,6 @@
 {
     "compilerOptions": {
-        //"module": "commonjs",
-        "experimentalDecorators": true,
+        //"module": "commonjs", 
         "target": "es2015",
         "module": "esnext",
         "allowJs": true,

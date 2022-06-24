@@ -6,7 +6,6 @@
  */
 import { Decrypt, Encrypt } from "./utils/js-aes";
 import { ReducersMapObject } from "redux";
-import { LocalMap, SessionMap } from "./decorators";
 
 export interface Action<T = any> {
     type: T;
@@ -15,6 +14,23 @@ export interface Action<T = any> {
 
 const Session = window.sessionStorage;
 const Local = window.localStorage;
+
+/**
+ * 属性队列，用于判断哪些属性是需要添加到sessionStorage中的，
+ */
+export var SessionMap: Map<string, string[]>;
+/**
+ * 属性队列，用于判断哪些属性是需要添加到localStorage中的，
+ */
+export var LocalMap: Map<string, string[]>;
+
+export function initLocal() {
+    LocalMap = new Map<string, string[]>();
+}
+
+export function initSession() {
+    SessionMap = new Map<string, string[]>();
+}
 
 /**
  * 自定义通用reducer，以module区分，每次更新module
@@ -29,6 +45,12 @@ export function reducers(modules: any) {
         const contextName = module.constructor.name;
 
         // session 的优先级高于Local 所以local中查出的结果会被Session覆盖
+        // 在程序初始化的时候也会执行写入Session或者Local的操作
+        // 但是因为初始化的时候获取不到SessionStorage和LocalStorage两个装饰器的值
+        // 所以无法判断哪些是我们需要添加到持久化里的
+        // 而且这样也没有意义，因为初始化的状态始终保存在类模块中
+        // 如果状态值没有发生变化也就不需要持久化了
+        // 当状态发生变化时，能够拿到带有装饰器需要持久化的对象
         let moduleItem = hasSession(
             hasLocal({ ...module }, contextName),
             contextName
@@ -59,9 +81,10 @@ function hasLocal(moduleItem: any, name: string) {
         moduleItem = Object.assign(
             moduleItem,
             JSON.parse(Decrypt(moduleLocal))
+            // JSON.parse(moduleLocal)
         );
     } else {
-        setLocal(name, moduleItem);
+        setLocal(name, JSON.stringify(moduleItem));
     }
     return moduleItem;
 }
@@ -76,7 +99,7 @@ function hasSession(moduleItem: any, name: string) {
     if (moduleSession) {
         moduleItem = Object.assign(moduleItem, JSON.parse(moduleSession));
     } else {
-        setSession(name, moduleItem);
+        setSession(name, JSON.stringify(moduleItem));
     }
     return moduleItem;
 }
@@ -92,15 +115,16 @@ export function setLocal(name: string, module: any) {
         });
         // 将他们存放到Localstorage中
         Local.setItem(name, Encrypt(JSON.stringify(obj)));
+        // Local.setItem(name, JSON.stringify(obj));
     }
 }
 
 export function setSession(name: string, module: any) {
     const list = SessionMap && SessionMap.get(name);
     // 只添加属性队列中需要sessionStorage的属性
-    console.log(list);
     if (list) {
         const obj = {};
+
         // 遍历需要session的字段
         list.forEach((key: string) => {
             Reflect.set(obj, key, Reflect.get(JSON.parse(module), key));
@@ -157,8 +181,10 @@ export function deleteLocal(moduleName: string, property?: string) {
     if (property) {
         hasModule(() => {
             const module = JSON.parse(Decrypt(local));
+            // const module = JSON.parse(local || "");
             if (Reflect.deleteProperty(module, property)) {
                 Local.setItem(moduleName, Encrypt(JSON.stringify(module)));
+                // Local.setItem(moduleName, JSON.stringify(module));
             } else {
                 throw new Error(
                     `在LocalStorage的${moduleName}中没有${property}字段`

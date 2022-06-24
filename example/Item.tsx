@@ -1,7 +1,6 @@
-import React, { FC } from "react";
-import { useModuleState } from "../src/decorators";
-import { useModule } from "../src/Provider";
-import { TModule } from "./app"; 
+import React, { FC } from "react"; 
+
+// import { TModule } from "./app"; 
 import { TodoModule } from "./modules";
 
 export const Item: FC<{ index: number; str: string }> = ({ index, str }) => {

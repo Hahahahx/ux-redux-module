@@ -1,27 +1,27 @@
-import { Action, Module, SessionStorage, Update } from "../../src/decorators";
-
+import {
+    BaseModule,
+    LocalStorage,
+    Module,
+    SessionStorage, 
+} from "../../src";
 /**
  * 需要加module状态名，不然现在是TodoModule，在编译打包以后就变成了e，webpack简化代码了，于是导致部分对其的识别失效 session
  */
-
-class BaseModule {
-    @Update
-    dispatch() {}
-
-    update() {}
-}
 
 @Module
 class TodoModule extends BaseModule {
     @SessionStorage
     list: string[] = [];
 
+    @LocalStorage
     str = "string";
 
-    // @Action
+    @LocalStorage
+    test = "string";
+
     async actionAddItem(item: string) {
-        console.log("add", item);
         try {
+            this.str = "fasdfa";
             this.list = await Promise.resolve([...this.list, item]);
             this.update();
         } catch (e: any) {
@@ -30,9 +30,9 @@ class TodoModule extends BaseModule {
     }
 
     actionDeleteItem(index: number) {
-        console.log("delete", index);
         const newlist = this.list.filter((item, i) => i !== index);
         this.list = [...newlist];
+
         this.update();
     }
 }

@@ -1,18 +1,17 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { TodoList } from "./TodoList";
-import ReduxProvider, { useModule } from "../src/Provider";
-import * as modules from "./modules";
-import { useModuleState } from "../src/decorators";
-import { TodoModule } from "./modules";
- 
-console.log(modules)
-const getModule = () => modules;
-export type TModule = ReturnType<typeof getModule>;
+import { ReduxProvider, useModule } from "../src";
+import { UserModule, TodoModule } from "./modules";
 
-const Test = () => { 
-    const module = useModuleState(modules.UserModule);
- 
+// const modules =;
+// const getModule = () => modules;
+// export type TModule = ReturnType<typeof getModule>;
+
+const Test = () => {
+    const module = useModule(UserModule);
+
+    console.log("_---------------");
 
     return (
         <div>
@@ -25,7 +24,7 @@ const Test = () => {
 const container = document.getElementById("root");
 const root = createRoot(container!);
 root.render(
-    <ReduxProvider value={modules}>
+    <ReduxProvider value={{ UserModule, TodoModule }}>
         <Test />
         <TodoList />
     </ReduxProvider>

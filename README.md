@@ -10,25 +10,16 @@ React, hook, 函数组件
 更好的管理项目，面向对象的形式使我们更能清晰的看见状态的结构。
 
 ```typescript
-class FileModule {
+@Module
+class FileModule extends BaseModule {
 
     @LocalStorage
     @SesstionStorage
     filename = 'FileModule';
 
     @SesstionStorage
-    fileType = 'txt'
-
-    @Update
-    private update() { }
-
-    @Action
-    reqFile() {
-        return UserApi.GetUserInfo('id1').then(res => {
-            this.filename = 'FileModule被Action更新了';
-            this.fileType = 'action'
-        })
-    }
+    fileType = 'txt' 
+ 
 
     reqFilebyUpdate() {
         this.filename = 'FileModule被Update更新了';
@@ -37,22 +28,18 @@ class FileModule {
     }
 }
 ```
-每一个类都可以提供一个update函数来更新你所做的状态改变，该update()必须要被@Update装饰，
-且命名必须为"update"。
 
-你也可以使用@Action，但是需要确保所装饰的函数的返回值是一个Promise对象，且你的状态修改也是在该流程中完成的。
+模块类需要继承基础模块`BaseModule`，以及加装饰器`@Module`，之后可以在类内部使用`this.update()`方法来提交该模块状态的更新
 
-被@SessionStorage和@LocalStorage装饰的字段会被注册到内存和本地中。<br/>
-提供了deleteSession(moduleName:string,property?:string)和deleteLocal()可以让你自由的删除他们。<br/>
+被`@SessionStorage`和`@LocalStorage`装饰的字段会被注册到内存和本地中。<br/>
+提供了`deleteSession(property:string)`和`deleteLocal(property:string)`可以让你自由的删除他们。<br/>
 你需要确保你不会在你的事件流中使用到被删除的属性。因为被装饰的属性会不断的在更新状态中更新对应的Local或Session
 
 引入:
-```typescript
 
-const module = { FileModule };
-const getModule = () => module;
-export type TModule = ReturnType<typeof getModule>;
+```js
 
+const module = { FileModule }; 
 ReactDOM.render(
     <ReduxProvider value={module}>
         <div>可以刷新网页，对状态加了 @SesstionStorage 会保存到SesstionStorage中</div>
@@ -66,22 +53,23 @@ ReactDOM.render(
 引入ReduxProvider，传入状态module，可以对module推测类型，方便后续在组件中更好的使用。
 
 在组件中使用：
-```typescript
+
+```js
 
 const Main = () => {
 
-    const { FileModule } = useModule<TModule>()
+    const fileModule = useModule(FileModule)
 
     return (
         <div style={{ textAlign: 'center' }}>
             <div className='page'>
-                FileModule-filename:{FileModule.filename}
+                FileModule-filename:{fileModule.filename}
             </div>
             <Button ghost onClick={() => {
-                FileModule.reqFile()
+                fileModule.reqFile()
             }}>ChangeFileModuleByAction</Button>
             <Button ghost onClick={() => {
-                FileModule.reqFilebyUpdate()
+                fileModule.reqFilebyUpdate()
             }}>ChangeUserModuleByUpdate</Button>
         </div>
     )

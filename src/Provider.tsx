@@ -1,43 +1,61 @@
-import React, { FC, useSyncExternalStore } from "react";
-import { Provider, useSelector } from "react-redux";
-import { combineReducers, createStore } from "redux";
-import { getStore } from "./decorators";
-import { reducers } from "./storage";
-import { configureStore } from "@reduxjs/toolkit";
-let modules = {};
+import React, {
+    createContext,
+    FC,
+    useContext,
+    useSyncExternalStore,
+} from "react";
+import { combineReducers, legacy_createStore as createStore } from "redux";
+import { getStore, Update } from "./decorators";
+import { deleteSeesion, reducers } from "./storage";
+
+const ModuleContext = createContext<any>(null);
 
 /**
  * ReduxProvider组件
  */
-const ReduxProvider: FC<{ value: any; children: any }> = ({
+export const ReduxProvider: FC<{ value: any; children: any }> = ({
     children,
     value,
 }) => {
-    modules = value;
-    const reducer = combineReducers(reducers(modules));
+    const reducer = combineReducers(reducers(value));
     const store = createStore(reducer);
     getStore(store);
-    return <Provider store={store}>{children}</Provider>;
+    return (
+        <ModuleContext.Provider value={store}>
+            {children}
+        </ModuleContext.Provider>
+    );
 };
-
-export default ReduxProvider;
 
 /**
  * module Hook
- * 使用react-redux的useSelector重新组装每个Module对象
+ * 根据传入的类模块在store中找到对应的状态
+ * 重新构建该类
+ * 通过useSyncExternalStore更新视图
  */
-export function useModule<T>(): T {
+export function useModule<T>(params: T) {
+    const store = useContext(ModuleContext);
 
-    // const state = useSyncExternalStore(store)
+    // @ts-ignore
+    const name = params && params?.constructor.name;
+    if (name) {
+        const state = useSyncExternalStore(
+            store.subscribe,
+            () => store.getState()[name]
+        );
 
-    const state = useSelector((state) => state);
-    const obj = {};
-    // 重新组装module
-    Reflect.ownKeys(modules).forEach((key) => {
-        const module = Reflect.get(modules, key);
-        const moduleState = Reflect.get(state as any, module.constructor.name);
-        Reflect.set(obj, key, Object.assign(module, moduleState));
-    });
-    // 对Module进行类型断言
-    return obj as T;
+        Object.assign(params, JSON.parse(state));
+        return params;
+    }
+    return params;
+}
+
+export class BaseModule {
+    @Update
+    protected dispatch() {}
+
+    update() {}
+
+    deleteLocal(propertyName: string) {}
+    deleteSeesion(propertyName: string) {}
 }

@@ -1,18 +1,11 @@
-import {
-    Action,
-    LocalStorage,
-    SessionStorage,
-    Update,
-    useModuleState,
-} from "./decorators";
-import ReduxProvider, { useModule } from "./Provider";
+import { LocalStorage, Module, SessionStorage } from "./decorators";
+import { ReduxProvider, BaseModule, useModule } from "./Provider";
 
 export {
     ReduxProvider,
+    Module,
     useModule,
-    Action,
-    Update,
     SessionStorage,
     LocalStorage,
-    useModuleState,
+    BaseModule,
 };

@@ -1,19 +1,12 @@
 import React, { useState } from "react";
-import { useModuleState } from "../src/decorators";
-import { useModule } from "../src/Provider";
-import { TModule } from "./app";
+import { useModule } from "../src";
+// import { TModule } from "./app";
 import { Item } from "./Item";
 import { TodoModule } from "./modules";
 
 export const TodoList = () => {
     const [text, setText] = useState("");
-    // const { TodoModule } = useModule<TModule>();
-
-    console.log(TodoModule);
-
-    const module = useModuleState(TodoModule);
-
-    console.log("mmmmmmmmmmm", module);
+    const module = useModule(TodoModule);
 
     return (
         <>
@@ -27,10 +20,10 @@ export const TodoList = () => {
             <button
                 onClick={() => {
                     setText("");
-                    TodoModule.actionAddItem(text + "asdafaf");
+                    module.actionAddItem(text + "asdafaf");
                 }}
             >
-                添加
+                添加{module.str}
             </button>
             <ul>
                 {module.list.map((item, index) => {
