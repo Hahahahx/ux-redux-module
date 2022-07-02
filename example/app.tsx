@@ -2,7 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { TodoList } from "./TodoList";
 import { ReduxProvider, useModule } from "../src";
-import { UserModule, TodoModule } from "./modules";
+import { TodoModule, UserModule } from "./modules";
 
 // const modules =;
 // const getModule = () => modules;
@@ -24,7 +24,7 @@ const Test = () => {
 const container = document.getElementById("root");
 const root = createRoot(container!);
 root.render(
-    <ReduxProvider value={{ UserModule, TodoModule }}>
+    <ReduxProvider value={{ TodoModule }}>
         <Test />
         <TodoList />
     </ReduxProvider>

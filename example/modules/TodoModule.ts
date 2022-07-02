@@ -21,14 +21,9 @@ class TodoModule extends BaseModule {
     @LocalStorage
     test = "string";
 
-    async actionAddItem(item: string) {
-        try {
-            this.str = "fasdfa";
-            this.list = await Promise.resolve([...this.list, item]);
-            this.update();
-        } catch (e: any) {
-            console.log(e);
-        }
+    actionAddItem(item: string) {
+        this.list = [...this.list, item];
+        this.update();
     }
 
     actionDeleteItem(index: number) {

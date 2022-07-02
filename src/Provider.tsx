@@ -6,7 +6,7 @@ import React, {
 } from "react";
 import { combineReducers, legacy_createStore as createStore } from "redux";
 import { getStore, Update } from "./decorators";
-import { reducers, StringifyMap } from "./storage";
+import { reducers, serializeProperty } from "./storage";
 
 const ModuleContext = createContext<any>(null);
 
@@ -38,22 +38,13 @@ export function useModule<T>(params: T) {
 
     // @ts-ignore
     const name = params && params?.constructor.name;
-
     if (name) {
-        const map = StringifyMap.get(name);
-
         const state = useSyncExternalStore(
             store.subscribe,
             () => store.getState()[name]
         );
 
-        Object.keys(state).forEach((key) => {
-            if (map?.includes(key)) {
-                state[key] = JSON.parse(state[key]);
-            }
-        });
-
-        Object.assign(params, state);
+        state && Object.assign(params, serializeProperty(name, state));
         return params;
     }
     return params;

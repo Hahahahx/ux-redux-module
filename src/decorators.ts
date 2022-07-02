@@ -14,6 +14,7 @@ import {
     setLocal,
     setSession,
     StringifyMap,
+    stringifyProperty,
 } from "./storage";
 import { AnyAction, CombinedState, Store } from "redux";
 import { LocalMap, SessionMap } from "./storage";
@@ -47,7 +48,6 @@ export function SessionStorage(...params: any) {
     // 将该属性添加到sessionStorage属性队列中去
     let list = SessionMap.get(contextName);
     list = list ? [...list, property] : [property];
-
     SessionMap.set(contextName, list);
 }
 
@@ -55,11 +55,11 @@ export function SessionStorage(...params: any) {
  * 将属性添加到LocalStorage中
  */
 export function LocalStorage(...params: any) {
-    // 因为是属性装饰器有函数提升效果，所以需要初始化Map，且需要确保SessionMap也存在变量提升！
+    // 因为是属性装饰器有函数提升效果，所以需要初始化Map，且需要确保LocalStorageMap也存在变量提升！
     LocalMap || initLocal();
     const [target, property] = params;
     const contextName = target.constructor.name;
-    // 将该属性添加到sessionStorage属性队列中去
+    // 将该属性添加到localStorage属性队列中去
     let list = LocalMap.get(contextName);
     list = list ? [...list, property] : [property];
     LocalMap.set(contextName, list);
@@ -97,21 +97,17 @@ export function Update(target: any, property: string, descriptor: any) {
         try {
             const value = await oldFunc.apply(this);
             // 同步dispatch 如UserModule_SET ，即为发送action去更新UserModule
+            stringifyProperty(contextName, module);
 
-            // 现在每次更新都是对整个模块的更新，
-            // 字符串化整个模块，取的时候再通过反序列取出整个模块
-            Object.keys(this).map((key) => {
-                if (StringifyMap.get(contextName)?.includes(key))
-                    this[key] = JSON.stringify(this[key]);
-            });
+            console.log(module);
 
             store.dispatch({
                 type: contextName + "_SET",
                 payload: { ...module },
             });
 
-            setSession(contextName, module, false);
-            setLocal(contextName, module, false);
+            setSession(contextName, module);
+            setLocal(contextName, module);
             return value;
         } catch (e: any) {
             throw Error(e);
@@ -156,9 +152,20 @@ export function Update(target: any, property: string, descriptor: any) {
  * 类装饰器，实现一个可以使用的this.update()
  * 该方法作用于给用户更新状态
  */
-export function Module(module: any) {
+export function Module(module: any) { 
+
+    const contextName = module.name;
+
     module.prototype.update = function () {
-        module.prototype.dispatch(module.name, this);
+        const moduleString = stringifyProperty(contextName, this);
+
+        store.dispatch({
+            type: contextName + "_SET",
+            payload: { ...moduleString },
+        });
+
+        setSession(contextName, moduleString);
+        setLocal(contextName, moduleString);
     };
 
     module.prototype.deleteSeesion = function (name: string) {

@@ -65,6 +65,11 @@ export function reducers(modules: any) {
             contextName
         );
 
+        // 在程序初始化的时候字符串化那些被stringify标记的字段
+        // 因为在上层模块中取值的时候序列化了这些对象
+        // 如果其是未字符串化的对象则会报错
+        moduleItem = stringifyProperty(contextName, moduleItem);
+
         obj[contextName] = function (state: any = moduleItem, action: Action) {
             // 以命名规则 Module_ 开头的，确保Action匹配到自身的Module而不会影响到其他的Module
             if (new RegExp("^" + contextName + "_").test(action.type)) {
@@ -82,15 +87,26 @@ export function reducers(modules: any) {
  * @param module    module对象
  */
 function hasLocal(moduleItem: any, name: string) {
-    const moduleLocal = Local.getItem(name);
+    let moduleLocal = Local.getItem(name);
     if (moduleLocal) {
-        moduleItem = Object.assign(
-            moduleItem,
-            JSON.parse(Decrypt(moduleLocal))
-            // JSON.parse(moduleLocal)
-        );
+        // 存到storage中的数据是字符串，需要转化一下才能拿到module
+        moduleLocal = JSON.parse(Decrypt(moduleLocal));
+        // 在module中有些字段我们做了stringify字符串化
+        // 因为取Strinify的值在上层模块中做了序列化
+        // 同时在另一个模块写入的时候做了字符串化
+        // 这个过程相互转化没有问题
+
+        // 但是在程序首次初始化的时候，即还没有数据写入到Session或者local中
+        // 我们所读到的module模块中，被标记Stringify的字段是尚未字符串化的
+        // 所以我们需要在第一次初始化程序的时候对整个结构做一次字符串化
+
+        // 这时如果后续再次程序初始化，即session或local中有了数据（数据是字符串化的）
+        // 就会对被标记的字段做两次字符串化的工作
+        // 所以此处我们对其做了序列化
+        moduleLocal = serializeProperty(name, moduleLocal);
+        moduleItem = Object.assign(moduleItem, moduleLocal);
     } else {
-        setLocal(name, JSON.stringify(moduleItem));
+        setLocal(name, moduleItem);
     }
     return moduleItem;
 }
@@ -101,27 +117,25 @@ function hasLocal(moduleItem: any, name: string) {
  * @param module    module对象
  */
 function hasSession(moduleItem: any, name: string) {
-    const moduleSession = Session.getItem(name);
+    let moduleSession = Session.getItem(name);
     if (moduleSession) {
-        moduleItem = Object.assign(moduleItem, JSON.parse(moduleSession));
+        moduleSession = JSON.parse(moduleSession);
+        moduleSession = serializeProperty(name, moduleSession);
+        moduleItem = Object.assign(moduleItem, moduleSession);
     } else {
-        setSession(name, JSON.stringify(moduleItem));
+        setSession(name, moduleItem);
     }
     return moduleItem;
 }
 
-export function setLocal(name: string, module: any, stringify?: boolean) {
+export function setLocal(name: string, module: any) {
     const list = LocalMap && LocalMap.get(name);
     // 只添加属性队列中需要localStorage的属性
     if (list) {
         const obj = {};
         // 遍历需要local的字段
         list.forEach((key: string) => {
-            Reflect.set(
-                obj,
-                key,
-                Reflect.get(stringify ? JSON.parse(module) : module, key)
-            );
+            Reflect.set(obj, key, Reflect.get(module, key));
         });
         // 将他们存放到Localstorage中
         Local.setItem(name, Encrypt(JSON.stringify(obj)));
@@ -129,19 +143,14 @@ export function setLocal(name: string, module: any, stringify?: boolean) {
     }
 }
 
-export function setSession(name: string, module: any, stringify?: boolean) {
+export function setSession(name: string, module: any) {
     const list = SessionMap && SessionMap.get(name);
     // 只添加属性队列中需要sessionStorage的属性
     if (list) {
         const obj = {};
-
         // 遍历需要session的字段
         list.forEach((key: string) => {
-            Reflect.set(
-                obj,
-                key,
-                Reflect.get(stringify ? JSON.parse(module) : module, key)
-            );
+            Reflect.set(obj, key, Reflect.get(module, key));
         });
         // 将他们存放到session中
         Session.setItem(name, JSON.stringify(obj));
@@ -208,4 +217,28 @@ export function deleteLocal(moduleName: string, property?: string) {
     } else {
         hasModule(() => Local.removeItem(moduleName));
     }
+}
+
+export function serializeProperty(contextName: string, module: any) {
+    console.log(contextName, module, StringifyMap.get(contextName));
+    Object.keys(module).map((key) => {
+        if (StringifyMap.get(contextName)?.includes(key)) {
+            module[key] =
+                typeof module[key] === "string"
+                    ? JSON.parse(module[key])
+                    : module[key];
+        }
+    });
+
+    return module;
+}
+
+// 字符串化某个被Stringify标记的对象，取的时候再通过反序列取出该对象
+export function stringifyProperty(contextName: string, module: any) {
+    Object.keys(module).map((key) => {
+        if (StringifyMap.get(contextName)?.includes(key))
+            module[key] = JSON.stringify(module[key]);
+    });
+
+    return module;
 }
