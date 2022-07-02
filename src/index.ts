@@ -1,4 +1,4 @@
-import { LocalStorage, Module, SessionStorage } from "./decorators";
+import { LocalStorage, Module, SessionStorage, Stringify } from "./decorators";
 import { ReduxProvider, BaseModule, useModule } from "./Provider";
 
 export {
@@ -7,5 +7,6 @@ export {
     useModule,
     SessionStorage,
     LocalStorage,
+    Stringify,
     BaseModule,
 };

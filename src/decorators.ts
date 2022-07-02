@@ -10,8 +10,10 @@ import {
     deleteSeesion,
     initLocal,
     initSession,
+    initStringify,
     setLocal,
     setSession,
+    StringifyMap,
 } from "./storage";
 import { AnyAction, CombinedState, Store } from "redux";
 import { LocalMap, SessionMap } from "./storage";
@@ -59,8 +61,22 @@ export function LocalStorage(...params: any) {
     const contextName = target.constructor.name;
     // 将该属性添加到sessionStorage属性队列中去
     let list = LocalMap.get(contextName);
-    list = list ? [...list, property] : [property]; 
+    list = list ? [...list, property] : [property];
     LocalMap.set(contextName, list);
+}
+
+/**
+ * 将属性添加到Stringify中
+ */
+export function Stringify(...params: any) {
+    // 因为是属性装饰器有函数提升效果，所以需要初始化Map，且需要确保StringifyMap也存在变量提升！
+    StringifyMap || initStringify();
+    const [target, property] = params;
+    const contextName = target.constructor.name;
+    // 将该属性添加到sessionStorage属性队列中去
+    let list = StringifyMap.get(contextName);
+    list = list ? [...list, property] : [property];
+    StringifyMap.set(contextName, list);
 }
 
 /**
@@ -84,13 +100,18 @@ export function Update(target: any, property: string, descriptor: any) {
 
             // 现在每次更新都是对整个模块的更新，
             // 字符串化整个模块，取的时候再通过反序列取出整个模块
-            store.dispatch({
-                type: contextName + "_SET",
-                payload: module,
+            Object.keys(this).map((key) => {
+                if (StringifyMap.get(contextName)?.includes(key))
+                    this[key] = JSON.stringify(this[key]);
             });
 
-            setSession(contextName, module);
-            setLocal(contextName, module);
+            store.dispatch({
+                type: contextName + "_SET",
+                payload: { ...module },
+            });
+
+            setSession(contextName, module, false);
+            setLocal(contextName, module, false);
             return value;
         } catch (e: any) {
             throw Error(e);
@@ -137,7 +158,7 @@ export function Update(target: any, property: string, descriptor: any) {
  */
 export function Module(module: any) {
     module.prototype.update = function () {
-        module.prototype.dispatch(module.name, JSON.stringify(this));
+        module.prototype.dispatch(module.name, this);
     };
 
     module.prototype.deleteSeesion = function (name: string) {

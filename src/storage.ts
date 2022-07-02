@@ -24,12 +24,21 @@ export var SessionMap: Map<string, string[]>;
  */
 export var LocalMap: Map<string, string[]>;
 
+/**
+ * 属性队列，用于判断哪些属性是需要字符串序列化的，
+ */
+export var StringifyMap: Map<string, string[]>;
+
 export function initLocal() {
     LocalMap = new Map<string, string[]>();
 }
 
 export function initSession() {
     SessionMap = new Map<string, string[]>();
+}
+
+export function initStringify() {
+    StringifyMap = new Map<string, string[]>();
 }
 
 /**
@@ -56,10 +65,7 @@ export function reducers(modules: any) {
             contextName
         );
 
-        obj[contextName] = function (
-            state: any = JSON.stringify(moduleItem),
-            action: Action
-        ) {
+        obj[contextName] = function (state: any = moduleItem, action: Action) {
             // 以命名规则 Module_ 开头的，确保Action匹配到自身的Module而不会影响到其他的Module
             if (new RegExp("^" + contextName + "_").test(action.type)) {
                 return action.payload;
@@ -104,14 +110,18 @@ function hasSession(moduleItem: any, name: string) {
     return moduleItem;
 }
 
-export function setLocal(name: string, module: any) {
+export function setLocal(name: string, module: any, stringify?: boolean) {
     const list = LocalMap && LocalMap.get(name);
     // 只添加属性队列中需要localStorage的属性
     if (list) {
         const obj = {};
         // 遍历需要local的字段
         list.forEach((key: string) => {
-            Reflect.set(obj, key, Reflect.get(JSON.parse(module), key));
+            Reflect.set(
+                obj,
+                key,
+                Reflect.get(stringify ? JSON.parse(module) : module, key)
+            );
         });
         // 将他们存放到Localstorage中
         Local.setItem(name, Encrypt(JSON.stringify(obj)));
@@ -119,7 +129,7 @@ export function setLocal(name: string, module: any) {
     }
 }
 
-export function setSession(name: string, module: any) {
+export function setSession(name: string, module: any, stringify?: boolean) {
     const list = SessionMap && SessionMap.get(name);
     // 只添加属性队列中需要sessionStorage的属性
     if (list) {
@@ -127,7 +137,11 @@ export function setSession(name: string, module: any) {
 
         // 遍历需要session的字段
         list.forEach((key: string) => {
-            Reflect.set(obj, key, Reflect.get(JSON.parse(module), key));
+            Reflect.set(
+                obj,
+                key,
+                Reflect.get(stringify ? JSON.parse(module) : module, key)
+            );
         });
         // 将他们存放到session中
         Session.setItem(name, JSON.stringify(obj));

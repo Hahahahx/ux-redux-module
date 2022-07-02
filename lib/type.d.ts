@@ -27,6 +27,10 @@ declare module "ux-redux-module" {
      */
     function SessionStorage(...props: any): void;
     /**
+     * Stringify存储
+     */
+    function Stringify(...props: any): void;
+    /**
      * LocalStorage存储
      */
     function LocalStorage(...props: any): void;
@@ -39,6 +43,7 @@ declare module "ux-redux-module" {
     }
 
     export {
+        Stringify,
         ReduxProvider,
         useModule,
         Module,
