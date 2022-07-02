@@ -1,7 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { TodoList } from "./TodoList";
-import { ReduxProvider, useModule } from "../src";
+import { ReduxProvider, useModule } from "../lib";
 import { TodoModule, UserModule } from "./modules";
 
 // const modules =;

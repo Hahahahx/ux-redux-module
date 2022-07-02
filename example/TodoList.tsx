@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useModule } from "../src";
+import { useModule } from "../lib";
 // import { TModule } from "./app";
 import { Item } from "./Item";
 import { TodoModule } from "./modules";

@@ -43,7 +43,7 @@ export function useModule<T>(params: T) {
             store.subscribe,
             () => store.getState()[name]
         );
-
+ 
         state && Object.assign(params, serializeProperty(name, state));
         return params;
     }

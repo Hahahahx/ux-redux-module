@@ -220,25 +220,26 @@ export function deleteLocal(moduleName: string, property?: string) {
 }
 
 export function serializeProperty(contextName: string, module: any) {
-    console.log(contextName, module, StringifyMap.get(contextName));
-    Object.keys(module).map((key) => {
-        if (StringifyMap.get(contextName)?.includes(key)) {
-            module[key] =
-                typeof module[key] === "string"
-                    ? JSON.parse(module[key])
-                    : module[key];
-        }
-    });
+    StringifyMap &&
+        Object.keys(module).map((key) => {
+            if (StringifyMap.get(contextName)?.includes(key)) {
+                module[key] =
+                    typeof module[key] === "string"
+                        ? JSON.parse(module[key])
+                        : module[key];
+            }
+        });
 
     return module;
 }
 
 // 字符串化某个被Stringify标记的对象，取的时候再通过反序列取出该对象
 export function stringifyProperty(contextName: string, module: any) {
-    Object.keys(module).map((key) => {
-        if (StringifyMap.get(contextName)?.includes(key))
-            module[key] = JSON.stringify(module[key]);
-    });
+    StringifyMap &&
+        Object.keys(module).map((key) => {
+            if (StringifyMap.get(contextName)?.includes(key))
+                module[key] = JSON.stringify(module[key]);
+        });
 
     return module;
 }
